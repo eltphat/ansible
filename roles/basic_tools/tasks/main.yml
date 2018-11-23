@@ -1,0 +1,13 @@
+---
+# tasks file for basic_tools
+- name: Install latest basic packages
+  package:
+          name: wget,telnet,tzdata,ntp,vim,epel-release
+          state: latest
+- name: Update timezone to Asia/Ho_Chi_Minh
+  timezone:
+          name: Asia/Ho_Chi_Minh
+- name: Colorizing terminal
+  blockinfile:
+          path: /etc/bashrc
+          block: "{{ lookup('file', 'files/color') }}"

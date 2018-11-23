@@ -1,0 +1,21 @@
+---
+# defaults file for swapfile
+swapfile_location: /swapfile
+swapfile_size: 4194304
+#swapfile_swappiness: False
+#swapfile_vfs_cache_pressure: False
+#swapfile_use_dd: False
+
+# Hosts with low RAM may need to use a small bs size
+bs_size_mb: 1024
+
+sysctl:
+# 0 to 100, how often swap is utilized
+# 60 is good for desktops, 10 is good for VPS
+
+        - { name: vm.swappiness, value: 10, state: present }
+
+# How often inode info is removed from cache
+# Usually a frequent and costly lookup if not cached
+
+        - { name: vm.vfs_cache_pressure, value: 50, state: present }

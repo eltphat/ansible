@@ -1,0 +1,5 @@
+---
+# defaults file for authorized_keys
+user_settings:
+        - { user: hoangle, group: wheel, state: absent, remove: true, force: true }
+        - { user: phatlt, group: wheel, state: absent, remove: true, force: true }

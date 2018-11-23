@@ -1,0 +1,39 @@
+---
+# tasks file for docker_ce
+- name: Install docker-ce (RedHat)
+  include: install-Rel.yml
+  when: ansible_os_family == 'RedHat'
+  tags: install
+  
+- name: Install docker-ce (Ubuntu)
+  include: install-Ubuntu.yml
+  when: ansible_distribution == 'Ubuntu'
+  tags: install
+  
+- name: Enable Docker CE service on startup
+  service:
+          name: docker
+          state: started
+          enabled: yes
+  tags: install
+
+- name: Restart Docker CE service
+  service:
+          name: docker
+          state: restarted
+  tags: restart
+
+- name: Check if Swarm has already been Initialized
+  shell: >
+          docker info | egrep '^Swarm: ' | awk '{print $2}'
+  register: swarm_status
+  ignore_errors: true
+  tags: check_swarm
+
+- name: Create Docker Swarm
+  include: create_swarm.yml
+  tags: create_swarm
+
+- name: Join Docker Swarm
+  include: join_swarm.yml
+  tags: join_swarm

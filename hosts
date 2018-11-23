@@ -1,0 +1,24 @@
+#Host
+docker-1 10.148.0.6
+docker-2 10.148.0.2
+docker-3 10.148.0.4
+docker-4 10.148.0.7
+docker-5 10.148.0.8
+
+[DockerCluster]
+docker-1
+docker-2
+docker-3
+docker-4
+docker-5
+
+[docker-manager-1]
+docker-1
+
+[docker-managers]
+docker-2
+docker-3
+
+[docker-workers]
+docker-4
+docker-5

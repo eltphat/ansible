@@ -1,0 +1,46 @@
+---
+# tasks file for authorized_keys
+- name: "Create/Remove user accounts and add users to groups"
+  user:
+          name: "{{ item.user }}"
+          groups: "{{ item.group }}"
+          state: "{{ item.state }}"
+          remove: "{{ item.remove | default('false') }}"
+          force: "{{ item.force | default('false') }}"
+  with_items: "{{ user_settings }}"
+- name: "Determine existing users"
+  shell: 'id -u "{{ item.user }}"'
+  with_items: "{{ user_settings }}"
+  register: existing_users
+  #changed_when: "existing_users.rc != 0"
+  failed_when: existing_users.rc > 1
+- name: "Add authorized keys"
+  authorized_key:
+          user: "{{ item.user }}"
+          state: "{{ item.state }}"
+          key: "{{ lookup('file', 'files/'+ item.user +'.pub') }}"
+  with_items: "{{ user_settings }}"
+  when: existing_users != 0
+  #ignore_errors: true
+  failed_when: existing_users == 0
+- name: "Change ROOT's Password - ALWAYS"
+  user:
+          name: "root"
+          password: "{{ 'k00t0r0@)!(!' | password_hash('sha512') }}"
+          update_password: "always"
+- name: "Allow admin users to sudo without a password"
+  lineinfile:
+          dest: "/etc/sudoers"
+          state: "present"
+          regexp: "^%admin"
+          line: "%admin ALL=(ALL) NOPASSWD: ALL"
+  when:
+          - ansible_distribution == "Ubuntu"
+- name: "Allow wheel users to sudo without a password"
+  lineinfile:
+          dest: "/etc/sudoers"
+          state: "present"
+          regexp: "^%wheel"
+          line: "%wheel ALL=(ALL) NOPASSWD: ALL"
+  when:
+          - ansible_distribution == "CentOS"

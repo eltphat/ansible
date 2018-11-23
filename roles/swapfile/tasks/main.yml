@@ -1,0 +1,40 @@
+---
+# tasks file for swapfile
+- name: Check swapfile
+  stat:
+          path: "{{ swapfile_location }}"
+  register: swap_file_check
+
+- name: Create swapfile
+  command: "dd if=/dev/zero of={{ swapfile_location }} bs={{ bs_size_mb }} count={{ swapfile_size }}"
+  register: write_swapfile
+  when: not swap_file_check.stat.exists
+
+- name: Set swapfile permissions
+  file: path="{{ swapfile_location }}" mode=600
+  when: not swap_file_check.stat.exists
+
+- name: Build swapfile
+  command: "mkswap {{ swapfile_location }}"
+  register: create_swapfile
+  when: write_swapfile.changed
+
+- name: Enable swapfile
+  command: "swapon {{ swapfile_location }}"
+  when: create_swapfile.changed
+
+- name: Add swapfile to /etc/fstab
+  lineinfile:
+          dest: /etc/fstab
+          line: "{{ swapfile_location }}   none    swap    sw    0   0"
+          state: present
+
+- name: Update sysctl settings
+  sysctl:
+          name: "{{ item.name }}"
+          value: "{{ item.value }}"
+          sysctl_set: true
+          reload: true
+          state: "{{ item.state | default('present') }}"
+          ignoreerrors: true
+  with_items: '{{ sysctl }}'

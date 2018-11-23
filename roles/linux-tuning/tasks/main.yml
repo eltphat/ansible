@@ -1,0 +1,50 @@
+---
+# tasks file for sysctl
+# Update Sysctl settings
+- name: Update sysctl settings
+  sysctl:
+          name: "{{ item.name }}"
+          value: "{{ item.value }}"
+          sysctl_set: true
+          reload: true
+          state: "{{ item.state | default('present') }}"
+          ignoreerrors: true
+  with_items: '{{ sysctl_centos7 }}'
+  when:
+          - ansible_distribution == "CentOS"
+          - ansible_distribution_major_version == "7"
+- name: Update sysctl settings
+  sysctl:
+          name: "{{ item.name }}"
+          value: "{{ item.value }}"
+          sysctl_set: true
+          reload: true
+          state: "{{ item.state | default('present') }}"
+          ignoreerrors: true
+  with_items: '{{ sysctl_centos6 }}'
+  when:
+          - ansible_distribution == "CentOS"
+          - ansible_distribution_major_version == "6"
+- name: Update sysctl settings
+  sysctl:
+          name: "{{ item.name }}"
+          value: "{{ item.value }}"
+          sysctl_set: true
+          reload: true
+          state: "{{ item.state | default('present') }}"
+          ignoreerrors: true
+  with_items: '{{ sysctl_ubuntu }}'
+  when:
+          - ansible_distribution == "Ubuntu"
+
+# Update limit settings
+- name: Configure system settings, file descriptors and number of threads
+  pam_limits:
+          domain: "*"
+          limit_type: "{{item.limit_type}}"
+          limit_item: "{{item.limit_item}}"
+          value: "{{item.value}}"
+  with_items: '{{ limit_config }}'
+  register:
+  #- name: Reload settings from all system configuration files
+  #shell: sysctl --system

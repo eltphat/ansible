@@ -1,0 +1,19 @@
+---
+# tasks file for docker_ce
+- name: Check if Swarm has already been Initialized
+  shell: >
+          docker info | egrep '^Swarm: ' | awk '{print $2}'
+  register: swarm_status
+  ignore_errors: true
+
+- name: "Swarm Init"
+  shell: docker swarm init --advertise-addr {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:2377
+  when: "'inactive' in swarm_status.stdout_lines"
+
+- name: "Get Manager Token"
+  shell: docker swarm join-token -q manager
+  register: manager_token
+
+- name: "Get Worker Token"
+  shell: docker swarm join-token -q worker
+  register: worker_token

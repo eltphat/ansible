@@ -1,0 +1,3 @@
+- name: "Add Managers to the Swarm"
+  shell: docker swarm join --token {{ token }} {{ address }}:2377
+  when: "'inactive' in swarm_status.stdout_lines"

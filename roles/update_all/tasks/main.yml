@@ -1,0 +1,6 @@
+---
+# tasks file for update_all
+- name: Update all packages to latest
+  package:
+          name: "*"
+          state: latest
