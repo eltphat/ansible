@@ -1,37 +1,45 @@
 ---
 - hosts: DockerCluster
-  gather_facts: true
+  gather_facts: no
   remote_user: meomeo
-  become: true
+  become: yes
+  pre_tasks:
+    - name: Install Python if not already present.
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      changed_when: False
+      ignore_errors: yes
+
+    - name: Gather facts after Python is definitely present.
+      setup:
   roles:
-          - update_all
-          - basic_tools
-          - swapfile
-          - security
-          - linux-tuning
-          - authorized_keys
-          - docker_ce_install
+    - update_all
+    - basic_tools
+    - swapfile
+    - security
+    - linux-tuning
+    - authorized_keys
+    - docker_ce_install
 
 - hosts: docker-manager-1
   remote_user: meomeo
   become: true
   roles:
-          - docker_ce_swarm_init
+    - docker_ce_swarm_init
 
 - hosts: docker-managers
   remote_user: meomeo
   become: true
   vars:
-          token: "{{ hostvars[groups['docker-manager-1'][0]]['manager_token']['stdout'] }}"
-          address: "{{ hostvars[groups['docker-manager-1'][0]]['ansible_default_ipv4']['address'] }}"
+    token: "{{ hostvars[groups['docker-manager-1'][0]]['manager_token']['stdout'] }}"
+    address: "{{ hostvars[groups['docker-manager-1'][0]]['ansible_default_ipv4']['address'] }}"
   roles:
-          - docker_ce_swarm_join
+    - docker_ce_swarm_join
 
 - hosts: docker-workers
   remote_user: meomeo
   become: true
   vars:
-          token: "{{ hostvars[groups['docker-manager-1'][0]]['worker_token']['stdout'] }}"
-          address: "{{ hostvars[groups['docker-manager-1'][0]]['ansible_default_ipv4']['address'] }}"
+    token: "{{ hostvars[groups['docker-manager-1'][0]]['worker_token']['stdout'] }}"
+    address: "{{ hostvars[groups['docker-manager-1'][0]]['ansible_default_ipv4']['address'] }}"
   roles:
-          - docker_ce_swarm_join
+    - docker_ce_swarm_join
