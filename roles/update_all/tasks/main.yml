@@ -1,6 +1,17 @@
 ---
 # tasks file for update_all
 - name: Update all packages to latest
-  package:
+  yum:
           name: "*"
           state: latest
+          update_cache: yes
+  when:
+          - ansible_distribution == "CentOS"
+- name: Update all packages to latest
+  apt:
+          name: "*"
+          state: latest
+          update_cache: yes
+          force_apt_get: yes
+  when:
+          - ansible_distribution == "Ubuntu"
