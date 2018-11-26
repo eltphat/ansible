@@ -2,12 +2,27 @@
 # tasks file for basic_tools
 - name: Install latest basic packages
   package:
-          name: wget,telnet,tzdata,ntp,vim,epel-release
+          name: wget,telnet,tzdata,ntp,vim
           state: latest
+- name: Install Latest EPEL Release
+  yum:
+          name: epel-release
+          state: latest
+  when:
+          - ansible_distribution == "CentOS"
 - name: Update timezone to Asia/Ho_Chi_Minh
   timezone:
           name: Asia/Ho_Chi_Minh
 - name: Colorizing terminal
   blockinfile:
           path: /etc/bashrc
-          block: "{{ lookup('file', 'files/color') }}"
+          block: "{{ lookup('file', 'files/color_centos') }}"
+  when:
+          - ansible_distribution == "CentOS"
+
+- name: Colorizing terminal
+  blockinfile:
+          path: /etc/bash.bashrc
+          block: "{{ lookup('file', 'files/color_ubuntu') }}"
+  when:
+          - ansible_distribution == "Ubuntu"

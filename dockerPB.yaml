@@ -4,13 +4,13 @@
   remote_user: meomeo
   become: true
   roles:
-          - update_all
-          - basic_tools
-          - swapfile
-          - security
+          #- update_all
+            #- basic_tools
+            #- swapfile
+            #- security
           - linux-tuning
-          - authorized_keys
-          - docker_ce_install
+            #- authorized_keys
+            #- docker_ce_install
 
 - hosts: docker-manager-1
   remote_user: meomeo

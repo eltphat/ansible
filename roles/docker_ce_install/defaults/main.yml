@@ -18,6 +18,11 @@ docker_prerequisite_packages_Ubuntu:
         - {package: "ca-certificates"}
         - {package: "curl"}
         - {package: "software-properties-common"}
+        - {package: "gnupg2"}
+        - {package: "python-urllib3"}
+        - {package: "python-openssl"}
+        - {package: "python-pyasn1"}
+        - {package: "python-pip"}
           
 docker_prerequisite_packages_Ubuntu_1404:
         - {package: "linux-image-extra-{{ ansible_kernel }}"}

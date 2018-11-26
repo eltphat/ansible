@@ -11,7 +11,11 @@
           name: "{{ item.package }}"
           state: present
   with_items: "{{ docker_prerequisite_packages_Ubuntu }}"
-  
+
+- name: apt-key dependencies
+  pip:
+          name: ndg-httpsclient
+
 - name: Install prerequisite packages (for Ubuntu 14.04 only)
   apt:
           name: "{{ item.package }}"
@@ -23,7 +27,7 @@
   apt_key:
           url: https://download.docker.com/linux/ubuntu/gpg
           state: present
-          id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+          #          id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
           
 - name: Add Docker CE repository
   apt_repository:
