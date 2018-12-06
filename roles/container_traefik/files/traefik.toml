@@ -1,0 +1,62 @@
+#debug = true
+
+accessLogsFile = "/dev/stdout"
+InsecureSkipVerify = true
+defaultEntryPoints = ["https"]
+
+# WEB interface of Traefik - it will show web page with overview of frontend and backend configurations 
+[web]
+  address = ":8080"
+  #usersFile = ".htpasswd"
+  [web.auth.basic]
+    # get md5 from htpasswd or http://www.htaccesstools.com/htpasswd-generator/
+    users = [
+	"kootoro:$apr1$Fw1tDvMK$HFpEDlPpxpFm7GNajeWOs1",
+	]
+    #usersFile = ".htpasswd"
+
+# Force HTTPS
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+    [entryPoints.http.redirect]
+      entryPoint = "https"
+  [entryPoints.https]
+    address = ":443"
+    [entryPoints.https.tls]
+#      [[entryPoints.https.tls.certificates]]
+#        CertFile = "/run/secrets/cert.pem"
+#        KeyFile = "/run/secrets/key.pem"
+
+# Let's encrypt configuration
+[acme]
+  email = "letanp@gmail.com" #any email id will work
+  storage="./acme.json"
+  entryPoint = "https"
+  acmeLogging=true 
+  onDemand = false #create certificate when container is created
+  OnHostRule = true
+  caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+  [acme.httpChallenge]
+    entryPoint = "http"
+
+  [[acme.domains]]
+  main = "meomeo.com"
+#[acme.dnsChallenge]
+#  provider = "cloudflare"
+#  delayBeforeCheck = 0
+#  [[acme.domains]]
+#    main = "meomeo.com"
+#  [[acme.domains]]
+#    main = "*.meomeo.com"
+
+# Connection to docker host system (docker.sock)
+[docker]
+  endpoint = "unix:///var/run/docker.sock"
+  domain = "meomeo.com"
+  watch = true
+  swarmmode = true
+  # This will hide all docker containers that don't have explicitly 
+  # set label to "enable"
+  exposedbydefault = false

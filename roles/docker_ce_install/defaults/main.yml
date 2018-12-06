@@ -20,6 +20,11 @@ docker_cleanup_packages_Ubuntu:
         - {package: "docker-engine"}
         - {package: "containerd"}
 
+docker_cleanup_packages_Debian:
+        - {package: "docker"}
+        - {package: "docker.io"}
+        - {package: "docker-engine"}
+
 docker_prerequisite_packages_EL:
         - {package: "yum-utils"}
         - {package: "device-mapper-persistent-data"}
@@ -39,3 +44,14 @@ docker_prerequisite_packages_Ubuntu:
 docker_prerequisite_packages_Ubuntu_1404:
         - {package: "linux-image-extra-{{ ansible_kernel }}"}
         - {package: "linux-image-extra-virtual"}
+
+docker_prerequisite_packages_Debian:
+        - {package: "apt-transport-https"}
+        - {package: "ca-certificates"}
+        - {package: "curl"}
+        - {package: "software-properties-common"}
+        - {package: "gnupg2"}
+
+docker_swarm_tcp_ports:
+
+docker_swarm_udp_ports:

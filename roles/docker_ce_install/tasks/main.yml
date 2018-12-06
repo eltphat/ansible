@@ -1,19 +1,58 @@
 ---
 # tasks file for docker_ce
+- name: Check if Docker has already been installed
+  shell: >
+          docker info | egrep '^Swarm: ' | awk '{print $2}'
+  register: swarm_status
+  ignore_errors: true
+
 - name: Install docker-ce (RedHat)
   include: install-Rel.yml
   when:
           - ansible_os_family == 'RedHat'
           - ansible_distribution_major_version == '7'
+          - swarm_status.stdout != "active"
   
 - name: Install docker-ce (Ubuntu)
   include: install-Ubuntu.yml
   when:
           - ansible_distribution == 'Ubuntu'
           - ansible_lsb.major_release|int >= 14
+          - swarm_status.stdout != "active"
+
+- name: Install docker-ce (Debian)
+  include: install-Debian.yml
+  when:
+          - ansible_distribution == 'Debian'
+          - ansible_lsb.major_release|int >= 8
+          - swarm_status.stdout != "active"
   
 - name: Enable Docker CE service on startup
   service:
           name: docker
           state: started
           enabled: yes
+
+- name: "Create/Remove user accounts and add users to docker group"
+  user:
+          name: "{{ item.user }}"
+          groups: "{{ item.group }}"
+          state: "{{ item.state }}"
+          remove: "{{ item.remove | default('false') }}"
+          force: "{{ item.force | default('false') }}"
+  with_items: "{{ docker_user }}"
+
+#- name: Open ports in iptables
+#  iptables_raw:
+#          name: docker_swarm_tcp_ports
+#          state: '{{ docker_swarm_tcp_ports | ternary("present", "absent") }}'
+#          rules: '-A INPUT -p tcp -m tcp --dport {{ docker_swarm_tcp_ports }} -j ACCEPT'
+#  with_items: "{{ firewall_allowed_tcp_ports }}"
+
+#- name: Open ports in iptables
+#  iptables_raw:
+#          name: docker_swarm_udp_ports
+#          state: '{{ docker_swarm_udp_ports | ternary("present", "absent") }}'
+#          rules: '-A INPUT -p tcp -m tcp --dport {{ docker_swarm_udp_ports }} -j ACCEPT'
+#  with_items: "{{ firewall_allowed_udp_ports }}"
+#  notify: restart docker

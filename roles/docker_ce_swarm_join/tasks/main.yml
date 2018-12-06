@@ -9,3 +9,13 @@
 - name: "Add Managers to the Swarm"
   shell: docker swarm join --token {{ token }} {{ address }}:2377
   when: "'inactive' in swarm_status.stdout_lines"
+
+- name: "Create/Remove user accounts and add users to docker group"
+  user:
+          name: "{{ item.user }}"
+          groups: "{{ item.group }}"
+          state: "{{ item.state }}"
+          create_home: "{{item.create_home}}"
+          remove: "{{ item.remove | default('false') }}"
+          force: "{{ item.force | default('false') }}"
+  with_items: "{{ docker_users }}"

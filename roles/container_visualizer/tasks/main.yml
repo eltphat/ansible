@@ -1,0 +1,36 @@
+---
+# tasks file for container_visualizer
+
+- name: Check directory exists
+  stat:
+          path: "{{ item }}"
+  register: folder_is_exist
+  with_items: "{{ folder }}"
+
+- name: Create directory for docker
+  file:
+          path: "{{ item.item }}"
+          state: directory
+          owner: dock
+          group: docker
+          mode: 0777
+          #when: item.stat.exists == false
+  with_items:
+          - "{{ folder_is_exist.results }}"
+
+- name: Check files exists
+  stat:
+          path: "{{ item }}"
+  register: file_is_exist
+  with_items: "{{ files }}"
+
+- name: Copy necessary files
+  copy:
+          src: "{{ item.item }}"
+          dest: /srvs/visualizer/
+          owner: dock
+          group: docker
+          mode: 0777
+  when: item.stat.exists == false
+  with_items:
+          - "{{ file_is_exist.results }}"

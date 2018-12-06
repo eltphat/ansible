@@ -1,0 +1,28 @@
+version: '3.3'
+
+networks:
+  proxy:
+    external: true
+
+services:
+  tomcat:
+    image: tomcat:9.0-jre10
+    volumes:
+    - /srvs/tomcat/admin-appsvc.war:/usr/local/tomcat/webapps/admin-appsvc.war
+    - /srvs/tomcat/context.xml:/usr/local/tomcat/webapps/manager/META-INF/context.xml
+    - /srvs/tomcat/tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml
+    - /srvs/tomcat/web.xml:/usr/local/tomcat/webapps/manager/WEB-INF/web.xml
+    environment:
+    - "SPRING_PROFILES_ACTIVE=dev"
+    networks:
+    - proxy
+    deploy:
+      replicas: 2
+      labels:
+      - "traefik.frontend.rule=Host:tomcat.meomeo.com; PathPrefixStrip:/"
+      - traefik.docker.network=proxy
+      - traefik.port=8080
+      - traefik.enable=true
+      placement:
+        constraints:
+          - node.role == worker

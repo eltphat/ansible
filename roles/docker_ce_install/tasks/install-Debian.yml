@@ -1,0 +1,29 @@
+---
+# tasks file for docker-ce-ansible-role
+- name: Remove previous docker installation
+  apt:
+          name: "{{ item.package }}"
+          state: absent
+  with_items: "{{ docker_cleanup_packages_Debian }}"
+  
+- name: Install prerequisite packages
+  apt:
+          name: "{{ item.package }}"
+          state: present
+  with_items: "{{ docker_prerequisite_packages_Debian }}"
+
+- name: Import Docker CE repository gpg key
+  apt_key:
+          url: https://download.docker.com/linux/debian/gpg
+          state: present
+          
+- name: Add Docker CE repository
+  apt_repository:
+          repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+          state: present
+          
+- name: Install Docker CE
+  apt:
+          name: docker-ce
+          state: present
+          update_cache: yes

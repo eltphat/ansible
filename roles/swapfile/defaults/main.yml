@@ -1,6 +1,7 @@
 ---
 # defaults file for swapfile
 swapfile_location: /swapfile
+#swapfile_size: 8388608
 swapfile_size: 4194304
 #swapfile_swappiness: False
 #swapfile_vfs_cache_pressure: False

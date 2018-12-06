@@ -12,7 +12,7 @@
 - name: Install iptables services
   yum:
           name: iptables-services
-          state: present
+          state: absent
   when:
           - ansible_distribution == "CentOS"
           - ansible_distribution_major_version == "7"
@@ -22,13 +22,14 @@
           name: iptables-persistent
           state: present
   when:
-          - ansible_distribution == "Ubuntu"
+          #          - ansible_distribution == "Ubuntu"
+          - ansible_os_family == "Debian"
 
 - name: Enable iptables services
   service:
           name: iptables
-          state: started
-          enabled: yes
+          state: stopped
+          enabled: no
   when:
           - ansible_distribution == "CentOS"
 
@@ -58,7 +59,8 @@
   iptables_raw:
           name: '{{ item.name }}_rules'
           rules: '{{ item.rules }}'
-          state: '{{ item.state }}'
+          #state: '{{ item.state }}'
+          state: absent
           keep_unmanaged: yes
           weight: '{{ item.weight|default(omit) }}'
           table: '{{ item.table|default(omit) }}'
@@ -69,7 +71,7 @@
           name: iptables_default_head
           weight: 10
           keep_unmanaged: '{{ iptables_keep_unmanaged }}'
-          state: present
+          state: absent
           rules: '{{ iptables_default_head }}'
 
 - name: Set default iptables tail rules
@@ -77,5 +79,6 @@
           name: iptables_default_tail
           weight: 99
           keep_unmanaged: '{{ iptables_keep_unmanaged }}'
-          state: '{{ (iptables_default_tail != "" ) | ternary("present", "absent") }}'
+          #state: '{{ (iptables_default_tail != "" ) | ternary("present", "absent") }}'
+          state: absent
           rules: '{{ iptables_default_tail }}'

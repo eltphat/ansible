@@ -1,0 +1,12 @@
+---
+# defaults file for container_tomcat
+folder:
+        - "/srvs"
+        - "/srvs/tomcat"
+
+files:
+        - "files/tomcat.yml"
+        - "files/admin-appsvc.war"
+        - "files/tomcat-users.xml"
+        - "files/context.xml"
+        - "files/web.xml"

@@ -1,0 +1,85 @@
+---
+# tasks file for security-iptables
+- name: Stop and Disabled Firewalld
+  service:
+          name: firewalld
+          state: stopped
+          enabled: no
+  when:
+          - ansible_distribution == "CentOS"
+          - ansible_distribution_major_version == "7"
+
+- name: Install iptables services
+  yum:
+          name: iptables-services
+          state: present
+  when:
+          - ansible_distribution == "CentOS"
+          - ansible_distribution_major_version == "7"
+
+- name: Install iptables services
+  apt:
+          name: iptables-persistent
+          state: present
+  when:
+          #          - ansible_distribution == "Ubuntu"
+          - ansible_os_family == "Debian"
+
+- name: Enable iptables services
+  service:
+          name: iptables
+          state: started
+          enabled: yes
+  when:
+          - ansible_distribution == "CentOS"
+
+- name: Disable selinux
+  selinux:
+          policy: targeted
+          state: disabled
+  when:
+          - ansible_distribution == "CentOS"
+  register: selinux_result
+
+- name: Reboot immediately if there was a change.
+  shell: "sleep 5 && reboot"
+  async: 1
+  poll: 0
+  when: selinux_result is changed
+  
+- name: Wait for the reboot to complete if there was a change.
+  wait_for_connection:
+          connect_timeout: 20
+          sleep: 5
+          delay: 5
+          timeout: 300
+  when: selinux_result is changed
+
+- name: Set custom iptables rules
+  iptables_raw:
+          name: '{{ item.name }}_rules'
+          rules: '{{ item.rules }}'
+          state: '{{ item.state }}'
+          keep_unmanaged: '{{ iptables_keep_unmanaged }}'
+          weight: '{{ item.weight|default(omit) }}'
+          table: '{{ item.table|default(omit) }}'
+  with_items: '{{ iptables_custom_rules }}'
+  #notify: restart docker
+
+- name: Set default iptables head rules
+  iptables_raw:
+          name: iptables_default_head
+          weight: 10
+          keep_unmanaged: '{{ iptables_keep_unmanaged }}'
+          state: present
+          rules: '{{ iptables_default_head }}'
+          #notify: restart docker
+
+- name: Set default iptables tail rules
+  iptables_raw:
+          name: iptables_default_tail
+          weight: 99
+          keep_unmanaged: '{{ iptables_keep_unmanaged }}'
+          state: '{{ (iptables_default_tail != "" ) | ternary("present", "absent") }}'
+          rules: '{{ iptables_default_tail }}'
+          #notify: restart docker

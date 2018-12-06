@@ -12,34 +12,74 @@
     - name: Gather facts after Python is definitely present.
       setup:
   roles:
-    - update_all
-    - basic_tools
-    - swapfile
-    - security
-    - linux-tuning
-    - authorized_keys
-    - docker_ce_install
+          #- update_all
+          #- basic_tools
+          #- swapfile
+          - role: security-iptables
+            iptables_custom_rules:
+                    - name: web-ports
+                      rules: '-A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT'
+                      state: present
+                    - name: tcp-docker-ports
+                      rules: '-A INPUT -p tcp -m multiport --dports 2376,2377,7946 -j ACCEPT'
+                      state: present
+                    - name: udp-docker-ports
+                      rules: '-A INPUT -p udp -m multiport --dport 7946,4789 -j ACCEPT'
+                      state: present
+            #- role: security-firewalld
+            #firewall_strict: yes
+            #firewall_allowed_tcp_ports:
+            #        - 22
+            #        - 80
+            #        - 443
+            #        - 8080
+            #        - 8081
+            #        - 2376
+            #        - 2377
+            #        - 7946
+            #firewall_allowed_udp_ports:
+            #        - 7946
+            #        - 4789
+          #- linux-tuning
+          #- authorized_keys
+          #- role: docker_ce_install
 
 - hosts: docker-manager-1
+  gather_facts: no
   remote_user: meomeo
   become: true
   roles:
-    - docker_ce_swarm_init
+          #- docker_ce_swarm_init
 
 - hosts: docker-managers
+  gather_facts: no
   remote_user: meomeo
   become: true
   vars:
     token: "{{ hostvars[groups['docker-manager-1'][0]]['manager_token']['stdout'] }}"
     address: "{{ hostvars[groups['docker-manager-1'][0]]['ansible_default_ipv4']['address'] }}"
   roles:
-    - docker_ce_swarm_join
+          #- docker_ce_swarm_join
 
 - hosts: docker-workers
+  gather_facts: no
   remote_user: meomeo
   become: true
   vars:
     token: "{{ hostvars[groups['docker-manager-1'][0]]['worker_token']['stdout'] }}"
     address: "{{ hostvars[groups['docker-manager-1'][0]]['ansible_default_ipv4']['address'] }}"
   roles:
-    - docker_ce_swarm_join
+          #- docker_ce_swarm_join
+
+- hosts: docker-container-managers
+  remote_user: meomeo
+  become: true
+  roles:
+          #- container_traefik
+          #- container_visualizer
+    - container_tomcat
+- hosts: docker-container-workers
+  remote_user: meomeo
+  become: true
+  roles:
+    - container_tomcat

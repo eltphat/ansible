@@ -1,0 +1,9 @@
+---
+# defaults file for container_visualizer
+
+folder:
+        - "/srvs"
+        - "/srvs/visualizer"
+
+files:
+        - "files/visualizer.yml"

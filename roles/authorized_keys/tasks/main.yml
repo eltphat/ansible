@@ -1,5 +1,10 @@
 ---
 # tasks file for authorized_keys
+- name: Ensure groups exists
+  group:
+          name: "{{ item.group }}"
+          state: "{{ item.state }}"
+  with_items: "{{ group_settings }}"
 - name: "Create/Remove user accounts and add users to groups"
   user:
           name: "{{ item.user }}"

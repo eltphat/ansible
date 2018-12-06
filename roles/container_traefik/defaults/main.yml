@@ -1,0 +1,11 @@
+---
+# defaults file for container_traefik
+folder:
+        - "/srvs"
+        - "/srvs/traefik"
+
+files:
+        - "files/traefik.yml"
+        - "files/traefik.toml"
+        - "files/acme.json"
+        - "files/.htpasswd"

@@ -22,3 +22,6 @@ docker_prerequisite_packages_Ubuntu:
 docker_prerequisite_packages_Ubuntu_1404:
         - {package: "linux-image-extra-{{ ansible_kernel }}"}
         - {package: "linux-image-extra-virtual"}
+
+docker_users:
+        - { user: dock, group: docker, state: present, create_home: no, remove: false, force: false }
