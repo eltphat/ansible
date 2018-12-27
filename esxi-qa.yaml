@@ -16,7 +16,10 @@
           - role: basic_tools
             timezone: UTC
           - role: hostsfile
+            host_name: "qa"
             hosts_entries:
+                    - name: qa
+                      ip: 127.0.0.1
                     - name: database
                       ip: 192.168.2.24
                       aliases:
@@ -25,6 +28,8 @@
             redis_requirepass: "fd085b92b30fe7d6493afadcc33a291936647d76af24d2db8d4ded8564653046"
           - role: service-tomcat
             tomcat_version: 9.0.13
+            env: qa
+            customconfig: ""
             tomcat_permissions_production: True
             tomcat_port_shutdown: 8005
             tomcat_port_connector: 8080
@@ -32,8 +37,11 @@
             tomcat_port_ajp: 8009
             tomcat_port_debug: 8000
             source_path:
-                    - { path: '/opt/apache-tomcat/webapps/resources/log' }
-            tomcat_link_name: apache-tomcat-qa
+                    - { path: '/opt/apache-tomcat/webapps/resources/log', state: 'directory' }
+            tomcat_link_name:
+                    - { name: apache-tomcat-qa }
+                    - { name: apache-tomcat }
+            tomcat_link: apache-tomcat
             tomcat_users:
                     - username: "kootoro"
                       password: "e3420e31ad70b1c1df26a08463fddc4b93d2313d"
@@ -61,6 +69,18 @@
                       read_priv: ".*"
                       write_priv: ".*"
                       state: present
+          - role: service-logrotate
+            logrotate_scripts:
+                    - name: tomcat
+                      path: /opt/apache-tomcat/logs/*.out
+                      options:
+                              - daily
+                              - size 200M
+                              - rotate 7
+                              - missingok
+                              - compress
+                              - delaycompress
+                              - copytruncate
           - role: swapfile
           - role: security-iptables
             iptables_custom_rules:
@@ -81,6 +101,6 @@
             user_settings:
                     - { user: duyvo, group: [ developer ], state: present, remove: no, force: no }
                     - { user: vienle, group: [ developer, tomcat ], state: present, remove: no, force: no }
-                    - { user: hoangle, group: wheel, state: present, remove: no, force: no }
+                    - { user: hoangle, group: [ wheel ], state: present, remove: no, force: no }
                     #- { user: sontruong, group: developer, state: absent, remove: no, force: no }
                     - { user: cuongle, group: [ developer, tomcat ], state: present, remove: no, force: no }

@@ -30,8 +30,9 @@
 - name: Create symlink {{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }} to {{ tomcat_install_path }}/{{ tomcat_service_name }}
   file:
     src: "{{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }}"
-    dest: "{{ tomcat_install_path }}/{{ tomcat_link_name }}"
+    dest: "{{ tomcat_install_path }}/{{ item.name }}"
     state: link
+  with_items: '{{ tomcat_link_name }}'
 
 - name: Configure access to Manager app (from localhost only or from anywhere)
   template:

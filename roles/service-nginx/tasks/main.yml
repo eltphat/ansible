@@ -73,7 +73,7 @@
   file:
     path: "{{ item.path }}"
     state: directory
-    owner: nginx
+    owner: "{{ item.owner | default('nginx')}}"
     group: nginx
     recurse: yes
     mode: 0770

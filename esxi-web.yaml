@@ -14,8 +14,12 @@
   roles:
           #- role: update_all
           - role: basic_tools
+            timezone: UTC
           - role: hostsfile
+            host_name: "web"
             hosts_entries:
+                    - name: web
+                      ip: 127.0.0.1
                     - name: database
                       ip: 192.168.2.24
                       aliases:
@@ -26,12 +30,29 @@
             ssl_config:
                     - { cert: 'kootoro.com' }
             source_path:
-                    - { path: '/data' }
-                    - { path: '/data/admintft.kootoro.com' }
-                    - { path: '/data/qa.admintft.kootoro.com' }
-                    - { path: '/data/uat.admintft.kootoro.com' }
-                    - { path: '/data/dev.admintft.kootoro.com' }
+                    - { path: '/data', state: 'directory' }
+                    - { path: '/data/admintft.kootoro.com', state: 'absent' }
+                    - { path: '/data/qa.admintft.kootoro.com', state: 'directory', owner: tunguyen }
+                    - { path: '/data/uat.admintft.kootoro.com', state: 'directory', owner: tunguyen }
+                    - { path: '/data/dev.admintft.kootoro.com', state: 'directory', owner: tunguyen }
+                    - { path: '/data/qa.demovn.kootoro.com', state: 'directory', owner: tunguyen }
             nginx_vhosts:
+                    - listen: "80"
+                      server_name: "qa.demovn.kootoro.com"
+                      root: "/data/qa.demovn.kootoro.com"
+                      index: "index.php index.html index.htm"
+                      state: "present"
+                      template: "{{ nginx_vhost_template }}"
+                      filename: "qa.demovn.kootoro.com.80.conf"
+                      extra_parameters: |
+
+                              location ~* \.(?:css|js|map|jpe?g|gif|png)$ { }
+                              location / {
+                                  index  index.html index.htm;
+                                  try_files $uri $uri/ /index.html?path=$uri&$args;
+                              }
+
+                              error_page  500 502 503 504  /50x.html;
                     - listen: "443 ssl"
                       server_name: "admintft.kootoro.com"
                       root: "/data/admintft.kootoro.com"
@@ -91,6 +112,18 @@
                               }
 
                               error_page  500 502 503 504  /50x.html;
+          - role: service-logrotate
+            logrotate_scripts:
+                    - name: tomcat
+                      path: /var/log/nginx/*.log
+                      options:
+                              - daily
+                              - size 200M
+                              - rotate 7
+                              - missingok
+                              - compress
+                              - delaycompress
+                              - copytruncate
             iptables_custom_rules:
                     - name: tomcat-ports
                       rules: '-A INPUT -p tcp -m tcp --dport 8089 -j ACCEPT'
@@ -103,7 +136,7 @@
             user_settings:
                     - { user: duyvo, group: [ developer ], state: present, remove: no, force: no }
                     - { user: vienle, group: [ developer ], state: present, remove: no, force: no }
-                    - { user: hoangle, group: wheel, state: present, remove: no, force: no }
+                    - { user: hoangle, group: [ wheel ], state: present, remove: no, force: no }
                     - { user: phatlt, group: [ developer, nginx], state: present, remove: no, force: no }
                     #- { user: sontruong, group: developer, state: absent, remove: no, force: no }
                     - { user: cuongle, group: [ developer ], state: present, remove: no, force: no }

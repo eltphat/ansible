@@ -6,4 +6,7 @@ basic_packages:
         - { name: tzdata }
         - { name: ntp }
         - { name: vim }
+        - { name: net-tools }
 timezone:
+cronjobs:
+        - { name: "Update Time", minute: "*/5", hour: "*", day: "*", month: "*", weekday: "*", job: "/usr/sbin/ntpdate asia.pool.ntp.org" }

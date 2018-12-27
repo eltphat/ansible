@@ -29,6 +29,7 @@ source_path:
 tomcat_install_path: /opt
 tomcat_service_name: tomcat
 tomcat_link_name:
+tomcat_link:
 tomcat_jvm_memory_percentage_xms: 15
 tomcat_jvm_memory_percentage_xmx: 55
 

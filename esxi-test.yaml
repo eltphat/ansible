@@ -18,11 +18,14 @@
             cronjobs:
                     - { name: "Update Time", minute: "*/5", hour: "*", day: "*", month: "*", weekday: "*", job: "ntpdate asia.pool.ntp.org" }
           - role: hostsfile
+            host_name: "test"
             hosts_entries:
                     - name: database
                       ip: 192.168.2.24
                       aliases:
                               - database.kootoro.com
+                    - name: test
+                      ip: 127.0.0.1
           - role: service-redis
             redis_bind_interface: "0.0.0.0"
             redis_requirepass: "fd085b92b30fe7d6493afadcc33a291936647d76af24d2db8d4ded8564653046"
@@ -41,7 +44,10 @@
                     - { path: '/opt/apache-tomcat-dev/webapps/resources/log', state: 'absent' }
                     - { path: '/opt/apache-tomcat-dev/sso', state: 'directory' }
                     - { path: '/opt/apache-tomcat-dev/admin-appsvc', state: 'directory' }  
-            tomcat_link_name: apache-tomcat-dev
+            tomcat_link_name:
+                    - { name: apache-tomcat-dev }
+                    - { name: apache-tomcat }
+            tomcat_link: apache-tomcat
             tomcat_users:
                     - username: "kootoro"
                       password: "e3420e31ad70b1c1df26a08463fddc4b93d2313d"

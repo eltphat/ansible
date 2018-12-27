@@ -23,6 +23,7 @@
     weekday: "{{ item.weekday }}"
     job: '{{ item.job }}'
   with_items: '{{ cronjobs }}'
+  ignore_errors: true
 
 - name: Update timezone to {{ timezone }}
   timezone:
