@@ -1,0 +1,33 @@
+---
+- hosts: dev-1
+  gather_facts: yes
+  remote_user: root
+  become: yes
+  pre_tasks:
+    - name: Install Python if not already present.
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      changed_when: False
+      ignore_errors: yes
+
+    - name: Gather facts after Python is definitely present.
+      setup:
+  roles:
+          #- role: update_all
+          - role: basic_tools
+          - role: hostsfile
+            hosts_entries:
+                    - name: database
+                      ip: 192.168.2.24
+                      aliases:
+                              - database.kootoro.com
+          - role: authorized_keys
+            group_settings:
+                    - { group: developer, state: present }
+                    - { group: tomcat, state: present }
+            user_settings:
+                    - { user: duyvo, group: [ developer ], state: present, remove: no, force: no }
+                    - { user: vienle, group: [ developer, tomcat ], state: present, remove: no, force: no }
+                    - { user: hoangle, group: wheel, state: present, remove: no, force: no }
+                    #- { user: sontruong, group: developer, state: absent, remove: no, force: no }
+                    - { user: cuongle, group: [ developer, tomcat ], state: present, remove: no, force: no }
+                    - { user: sontruong, password: SonTruong135, group: [ developer, tomcat ], state: present, remove: no, force: no }

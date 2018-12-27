@@ -6,3 +6,4 @@ basic_packages:
         - { name: tzdata }
         - { name: ntp }
         - { name: vim }
+timezone:

@@ -13,9 +13,20 @@
   when:
           - ansible_distribution == "CentOS"
 
-- name: Update timezone to Asia/Ho_Chi_Minh
+- name: "Cronjob Entry"
+  cron:
+    name: "{{ item.name }}"
+    minute: "{{ item.minute }}"
+    hour: "{{ item.hour }}"
+    day: "{{ item.day }}"
+    month: "{{ item.month }}"
+    weekday: "{{ item.weekday }}"
+    job: '{{ item.job }}'
+  with_items: '{{ cronjobs }}'
+
+- name: Update timezone to {{ timezone }}
   timezone:
-          name: Asia/Ho_Chi_Minh
+          name: "{{ timezone }}"
 
 - name: Colorizing terminal
   blockinfile:

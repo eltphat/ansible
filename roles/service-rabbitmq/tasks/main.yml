@@ -1,0 +1,24 @@
+---
+# tasks file for service-rabbitmq
+#- name: Ensure erlang is installed.
+#  package:
+#    name: erlang
+#    state: present
+
+# Setup/install tasks.
+- include: install-Rel.yml
+  when: ansible_os_family == 'RedHat'
+
+- include: install-Deb.yml
+  when: ansible_os_family == 'Debian'
+
+- name: Ensure rabbitmq is started and enabled (if configured).
+  service:
+    name: "{{ rabbitmq_daemon }}"
+    state: "{{ rabbitmq_state }}"
+    enabled: "{{ rabbitmq_enabled }}"
+
+- include: plugins.yml
+- include: vhost.yml
+- include: user.yml
+- include: policy.yml

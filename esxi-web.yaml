@@ -1,0 +1,110 @@
+---
+- hosts: web-1
+  gather_facts: yes
+  remote_user: root
+  become: yes
+  pre_tasks:
+    - name: Install Python if not already present.
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      changed_when: False
+      ignore_errors: yes
+
+    - name: Gather facts after Python is definitely present.
+      setup:
+  roles:
+          #- role: update_all
+          - role: basic_tools
+          - role: hostsfile
+            hosts_entries:
+                    - name: database
+                      ip: 192.168.2.24
+                      aliases:
+                              - database.kootoro.com
+          - role: swapfile
+          - role: security-iptables
+          - role: service-nginx
+            ssl_config:
+                    - { cert: 'kootoro.com' }
+            source_path:
+                    - { path: '/data' }
+                    - { path: '/data/admintft.kootoro.com' }
+                    - { path: '/data/qa.admintft.kootoro.com' }
+                    - { path: '/data/uat.admintft.kootoro.com' }
+                    - { path: '/data/dev.admintft.kootoro.com' }
+            nginx_vhosts:
+                    - listen: "443 ssl"
+                      server_name: "admintft.kootoro.com"
+                      root: "/data/admintft.kootoro.com"
+                      index: "index.php index.html index.htm"
+                      state: "absent"
+                      template: "{{ nginx_vhost_template }}"
+                      filename: "admintft.kootoro.com.conf"
+                      extra_parameters: |
+
+                              ssl_certificate     /etc/nginx/ssl/kootoro.com.chained.crt;
+                              ssl_certificate_key /etc/nginx/ssl/kootoro.com.key;
+                    - listen: "80"
+                      server_name: "qa.admintft.kootoro.com"
+                      root: "/data/qa.admintft.kootoro.com"
+                      index: "index.php index.html index.htm"
+                      state: "present"
+                      template: "{{ nginx_vhost_template }}"
+                      filename: "qa.admintft.kootoro.com.conf"
+                      extra_parameters: |
+
+                              location ~* \.(?:css|js|map|jpe?g|gif|png)$ { }
+                              location / {
+                                  index  index.html index.htm;
+                                  try_files $uri $uri/ /index.html?path=$uri&$args;
+                              }
+
+                              error_page  500 502 503 504  /50x.html;
+                    - listen: "80"
+                      server_name: "uat.admintft.kootoro.com"
+                      root: "/data/uat.admintft.kootoro.com"
+                      index: "index.php index.html index.htm"
+                      state: "present"
+                      template: "{{ nginx_vhost_template }}"
+                      filename: "uat.admintft.kootoro.com.conf"
+                      extra_parameters: |
+
+                              location ~* \.(?:css|js|map|jpe?g|gif|png)$ { }
+                              location / {
+                                  index  index.html index.htm;
+                                  try_files $uri $uri/ /index.html?path=$uri&$args;
+                              }
+
+                              error_page  500 502 503 504  /50x.html;
+                    - listen: "80"
+                      server_name: "dev.admintft.kootoro.com"
+                      root: "/data/dev.admintft.kootoro.com"
+                      index: "index.php index.html index.htm"
+                      state: "present"
+                      template: "{{ nginx_vhost_template }}"
+                      filename: "dev.admintft.kootoro.com.conf"
+                      extra_parameters: |
+
+                              location ~* \.(?:css|js|map|jpe?g|gif|png)$ { }
+                              location / {
+                                  index  index.html index.htm;
+                                  try_files $uri $uri/ /index.html?path=$uri&$args;
+                              }
+
+                              error_page  500 502 503 504  /50x.html;
+            iptables_custom_rules:
+                    - name: tomcat-ports
+                      rules: '-A INPUT -p tcp -m tcp --dport 8089 -j ACCEPT'
+                      state: absent
+          - role: linux-tuning
+          - role: authorized_keys
+            group_settings:
+                    - { group: developer, state: present }
+                    - { group: tomcat, state: absent }
+            user_settings:
+                    - { user: duyvo, group: [ developer ], state: present, remove: no, force: no }
+                    - { user: vienle, group: [ developer ], state: present, remove: no, force: no }
+                    - { user: hoangle, group: wheel, state: present, remove: no, force: no }
+                    - { user: phatlt, group: [ developer, nginx], state: present, remove: no, force: no }
+                    #- { user: sontruong, group: developer, state: absent, remove: no, force: no }
+                    - { user: cuongle, group: [ developer ], state: present, remove: no, force: no }
+                    - { user: tunguyen, group: [ developer, nginx ], state: present, remove: no, force: no }

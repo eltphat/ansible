@@ -9,6 +9,7 @@
   user:
           name: "{{ item.user }}"
           groups: "{{ item.group }}"
+          password: "{{ item.password | default('') }}"
           state: "{{ item.state }}"
           remove: "{{ item.remove | default('false') }}"
           force: "{{ item.force | default('false') }}"
@@ -26,7 +27,7 @@
           key: "{{ lookup('file', 'files/'+ item.user +'.pub') }}"
   with_items: "{{ user_settings }}"
   when: existing_users != 0
-  #ignore_errors: true
+  ignore_errors: true
   failed_when: existing_users == 0
 - name: "Change ROOT's Password - ALWAYS"
   user:

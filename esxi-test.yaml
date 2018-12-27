@@ -1,0 +1,72 @@
+---
+- hosts: test-1
+  gather_facts: yes
+  remote_user: root
+  become: yes
+  pre_tasks:
+    - name: Install Python if not already present.
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      changed_when: False
+      ignore_errors: yes
+
+    - name: Gather facts after Python is definitely present.
+      setup:
+  roles:
+          #- role: update_all
+          - role: basic_tools
+            timezone: UTC
+            cronjobs:
+                    - { name: "Update Time", minute: "*/5", hour: "*", day: "*", month: "*", weekday: "*", job: "ntpdate asia.pool.ntp.org" }
+          - role: hostsfile
+            hosts_entries:
+                    - name: database
+                      ip: 192.168.2.24
+                      aliases:
+                              - database.kootoro.com
+          - role: service-redis
+            redis_bind_interface: "0.0.0.0"
+            redis_requirepass: "fd085b92b30fe7d6493afadcc33a291936647d76af24d2db8d4ded8564653046"
+          - role: service-tomcat
+            tomcat_version: 9.0.13
+            env: dev
+            customconfig: ""
+            tomcat_permissions_production: True
+            tomcat_port_shutdown: 8005
+            tomcat_port_connector: 8089
+            tomcat_port_redirect: 8443
+            tomcat_port_ajp: 8009
+            tomcat_port_debug: 8000
+            source_path:
+                    - { path: '/opt/apache-tomcat/webapps/resources/log', state: 'absent' }
+                    - { path: '/opt/apache-tomcat-dev/webapps/resources/log', state: 'absent' }
+                    - { path: '/opt/apache-tomcat-dev/sso', state: 'directory' }
+                    - { path: '/opt/apache-tomcat-dev/admin-appsvc', state: 'directory' }  
+            tomcat_link_name: apache-tomcat-dev
+            tomcat_users:
+                    - username: "kootoro"
+                      password: "e3420e31ad70b1c1df26a08463fddc4b93d2313d"
+                      roles: "tomcat,admin,manager,manager-gui"
+                    - username: "tomcat"
+                      password: "50a50c8fc28eac48bea2480be3250187de12f013"
+                      roles: "tomcat"
+          - role: swapfile
+          - role: security-iptables
+            iptables_custom_rules:
+                    - name: tomcat-ports
+                      rules: '-A INPUT -p tcp -m tcp --dport 8089 -j ACCEPT'
+                      state: present
+                    - name: redis-ports
+                      rules: '-A INPUT -p tcp -m tcp --dport 6379 -j ACCEPT'
+                      state: present
+          - role: linux-tuning
+          - role: authorized_keys
+            group_settings:
+                    - { group: developer, state: present }
+                    - { group: tomcat, state: present }
+            user_settings:
+                    - { user: duyvo, group: [ developer ], state: present, remove: no, force: no }
+                    - { user: vienle, group: [ developer, tomcat ], state: present, remove: no, force: no }
+                    - { user: hoangle, group: wheel, state: present, remove: no, force: no }
+                    #- { user: sontruong, group: developer, state: absent, remove: no, force: no }
+                    - { user: cuongle, group: [ developer, tomcat ], state: present, remove: no, force: no }
+                    - { user: sontruong, password: "{{ 'SonTruong135' | password_hash('sha512') }}", group: [ developer, tomcat ], state: present, remove: no, force: no }

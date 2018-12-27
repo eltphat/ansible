@@ -1,0 +1,6 @@
+---
+# handlers file for hostsfile
+- name: restart hosts
+  service:
+    name: hostsd
+    state: restarted

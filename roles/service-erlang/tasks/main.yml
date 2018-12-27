@@ -1,0 +1,7 @@
+---
+# tasks file for service-erlang
+- include: install-Rel.yml
+  when: ansible_os_family == 'RedHat'
+
+- include: install-Deb.yml
+  when: ansible_os_family == 'Debian'

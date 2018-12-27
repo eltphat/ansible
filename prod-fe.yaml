@@ -1,0 +1,99 @@
+---
+- hosts: prod-fe
+  gather_facts: yes
+  remote_user: centos
+  become: yes
+  pre_tasks:
+    - name: Install Python if not already present.
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      changed_when: False
+      ignore_errors: yes
+
+    - name: Gather facts after Python is definitely present.
+      setup:
+  roles:
+          #- role: update_all
+          #- role: basic_tools
+          - role: basic_tools
+            basic_packages:
+                    - { name: ntfsprogs }
+            #- role: services
+            #services:
+            #        - name: redis
+            #          state: started
+            #          enabled: yes
+          - role: swapfile
+          - role: service-nginx
+            ssl_config:
+                    - { cert: 'kootoro.com' }
+            source_path:
+                    - { path: '/data' }
+                    - { path: '/data/build' }
+                    - { path: '/data/demo.kootoro.com' }
+                    - { path: '/data/admin.kootoro.com' }
+            nginx_vhosts:
+                    - listen: "443 ssl default_server"
+                      server_name: "demo.kootoro.com"
+                      root: "/data/demo.kootoro.com"
+                      index: "index.php index.html index.htm"
+                      state: "present"
+                      template: "{{ nginx_vhost_template }}"
+                      filename: "demo.kootoro.com.conf"
+                      extra_parameters: |
+                              
+                              location ~* \.(?:css|js|map|jpe?g|gif|png)$ { }
+                              location / {
+                                  index  index.html index.htm;
+                                  try_files $uri $uri/ /index.html?path=$uri&$args;
+                              }
+
+                              error_page  500 502 503 504  /50x.html;
+
+                              ssl_certificate     /etc/nginx/ssl/kootoro.com.chained.crt;
+                              ssl_certificate_key /etc/nginx/ssl/kootoro.com.key;
+                    - listen: "80"
+                      server_name: "demo.kootoro.com"
+                      return: "301 https://$server_name$request_uri"
+                      state: "present"
+                      filename: "demo.kootoro.com.80.conf"
+                    - listen: "443 ssl"
+                      server_name: "admin.kootoro.com"
+                      root: "/data/admin.kootoro.com"
+                      index: "index.php index.html index.htm"
+                      state: "present"
+                      template: "{{ nginx_vhost_template }}"
+                      filename: "admin.kootoro.com.conf"
+                      extra_parameters: |
+
+                              location ~* \.(?:css|js|map|jpe?g|gif|png)$ { }
+                              location / {
+                                  index  index.html index.htm;
+                                  try_files $uri $uri/ /index.html?path=$uri&$args;
+                              }
+
+                              error_page  500 502 503 504  /50x.html;
+
+                              ssl_certificate     /etc/nginx/ssl/kootoro.com.chained.crt;
+                              ssl_certificate_key /etc/nginx/ssl/kootoro.com.key;
+                    - listen: "80"
+                      server_name: "admin.kootoro.com"
+                      return: "301 https://$server_name$request_uri"
+                      state: "present"
+                      filename: "admin.kootoro.com.80.conf"
+          - role: security-iptables
+            iptables_custom_rules:
+                    - name: internal-ips
+                      rules: '-A INPUT -s 172.31.0.0/16 -p tcp -m tcp -j ACCEPT'
+                      state: present
+          - role: linux-tuning
+          - role: authorized_keys
+            group_settings:
+                    - { group: developer, state: present }
+                    - { group: tomcat, state: absent }
+            user_settings:
+                    - { user: duyvo, group: [ developer ], state: present, remove: no, force: no }
+                      #- { user: vienle, group: [ developer, tomcat ], state: present, remove: no, force: no }
+                    - { user: tunguyen, group: [ developer, nginx ], state: present, remove: no, force: no }
+                    - { user: hoangle, group: wheel, state: present, remove: no, force: no }
+                    #- { user: sontruong, group: developer, state: absent, remove: no, force: no }
+                    #- { user: cuongle, group: developer, state: present, remove: no, force: no }

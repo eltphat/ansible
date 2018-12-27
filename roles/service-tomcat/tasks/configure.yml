@@ -1,0 +1,102 @@
+---
+# tasks file for tomcat-ansible-role
+
+- name: Setup server.xml
+  template:
+    src: "tomcat-server-{{ '.'.join(tomcat_version.split('.')[:2]) }}{{ customconfig }}.xml.j2"
+    dest: "{{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }}/conf/server.xml"
+  with_items: '{{ tomcat_ports }}'
+  notify: restart tomcat
+
+- name: Set fact of user roles to be enabled
+  set_fact:
+    tomcat_user_roles: "{{ (tomcat_user_roles + item.roles.split(',')|list)|unique }}"
+  with_items:
+    - "{{ tomcat_users }}"
+
+- name: Setup tomcat-users.xml
+  template:
+    src: "tomcat-users-{{ '.'.join(tomcat_version.split('.')[:2]) }}.xml.j2"
+    dest: "{{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }}/conf/tomcat-users.xml"
+  notify: restart tomcat
+
+- name: Setup setenv.sh
+  template:
+    src: "setenv.sh.j2"
+    dest: "{{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }}/bin/setenv.sh"
+  notify: restart tomcat
+  ignore_errors: true
+
+- name: Create symlink {{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }} to {{ tomcat_install_path }}/{{ tomcat_service_name }}
+  file:
+    src: "{{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }}"
+    dest: "{{ tomcat_install_path }}/{{ tomcat_link_name }}"
+    state: link
+
+- name: Configure access to Manager app (from localhost only or from anywhere)
+  template:
+    src: manager-context.xml.j2
+    dest: "{{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }}/webapps/manager/META-INF/context.xml"
+  notify: restart tomcat
+
+- name: Configure access to Host Manager (from localhost only or from anywhere)
+  template:
+    src: host-manager-context.xml.j2
+    dest: "{{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }}/webapps/host-manager/META-INF/context.xml"
+  notify: restart tomcat
+
+- name: Create Data Sources
+  file:
+    path: "{{ item.path }}"
+    state: "{{ item.state | default('absent')}}"
+    owner: tomcat
+    group: tomcat
+    #recurse: yes
+    mode: 0770
+  with_items: '{{ source_path }}'
+
+- name: Ensure SSL certificate is existing and secured
+  copy:
+    src: "{{ ssl_local_path }}/{{ item.cert }}.pkcs12"
+    dest: "{{ ssl_path }}/{{ item.cert }}.pkcs12"
+    owner: tomcat
+    group: tomcat
+    mode: 0644
+  with_items: '{{ ssl_config }}'
+  ignore_errors: true
+  #  notify: restart tomcat
+
+- name: Ensure SSL jks is existing and secured
+  copy:
+    src: "{{ ssl_local_path }}/tomcat.jks"
+    dest: "{{ ssl_path }}/tomcat.jks"
+    owner: tomcat
+    group: tomcat
+    mode: 0644
+  with_items: '{{ ssl_config }}'
+  ignore_errors: true
+  #  notify: restart tomcat
+
+- name: Set production permissions
+  include: set-production-permissions.yml
+  when: >
+    (tomcat_installed is changed or tomcat_permissions_ensure_on_every_run) and
+    tomcat_permissions_production
+
+- name: Set non production permissions
+  include: set-non-production-permissions.yml
+  when: >
+    (tomcat_installed is changed or tomcat_permissions_ensure_on_every_run) and
+    tomcat_permissions_production == False
+
+- name: Configure service file {{ tomcat_service_name }}.service
+  template:
+    src: tomcat.service.j2
+    dest: /usr/lib/systemd/system/{{ tomcat_service_name }}.service
+  notify: restart tomcat
+
+- name: Enable tomcat service on startup
+  systemd:
+    name: "{{ tomcat_service_name}}"
+    enabled: "{% if tomcat_service_enabled_on_startup %}yes{% else %}no{% endif %}"
+    daemon_reload: yes

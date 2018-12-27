@@ -1,0 +1,15 @@
+---
+- name: Add packagecloud GPG key.
+  rpm_key:
+    key: "https://packagecloud.io/gpg.key"
+    state: present
+
+- name: Download ErLang package.
+  get_url:
+    url: "{{ erlang_rpm_url }}"
+    dest: "/tmp/{{ erlang_rpm }}"
+
+- name: Ensure ErLang is installed.
+  yum:
+    name: "/tmp/{{ erlang_rpm }}"
+    state: "present"

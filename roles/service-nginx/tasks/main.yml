@@ -1,0 +1,83 @@
+---
+# tasks file for service-nginx
+# Variable setup.
+- name: Include OS-specific variables.
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Define nginx_user.
+  set_fact:
+    nginx_user: "{{ __nginx_user }}"
+  when: nginx_user is not defined
+
+# Setup/install tasks.
+- include_tasks: install-RedHat.yml
+  when: ansible_os_family == 'RedHat'
+
+- include_tasks: install-Ubuntu.yml
+  when: ansible_distribution == 'Ubuntu'
+
+- include_tasks: install-Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- include_tasks: install-FreeBSD.yml
+  when: ansible_os_family == 'FreeBSD'
+
+- include_tasks: install-OpenBSD.yml
+  when: ansible_os_family == 'OpenBSD'
+
+- include_tasks: install-Archlinux.yml
+  when: ansible_os_family == 'Archlinux'
+
+# Vhost configuration.
+- import_tasks: vhosts.yml
+
+# Nginx setup.
+- name: Copy nginx configuration in place.
+  template:
+    src: "{{ nginx_conf_template }}"
+    dest: "{{ nginx_conf_file_path }}"
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0644
+  notify:
+    - reload nginx
+
+# SSL
+- name: Ensure nginx ssl path exists.
+  file:
+    path: "{{ ssl_path }}"
+    state: directory
+  notify: reload nginx
+- name: Ensure SSL certificate is existing and secured
+  copy:
+    src: "{{ ssl_local_path }}/{{ item.cert }}.chained.crt"
+    dest: "{{ssl_path }}/{{ item.cert }}.chained.crt"
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0644
+  with_items: '{{ ssl_config }}'
+  notify:
+    - reload nginx
+- name: Ensure SSL key is existing and secured
+  copy:
+    src: "{{ ssl_local_path }}/{{ item.cert }}.key"
+    dest: "{{ ssl_path }}/{{ item.cert }}.key"
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0644
+  with_items: '{{ ssl_config }}'
+  notify:
+    - reload nginx
+
+- name: Create Data Sources
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: nginx
+    group: nginx
+    recurse: yes
+    mode: 0770
+  with_items: '{{ source_path }}'
+
+- name: Ensure nginx is started and enabled to start at boot.
+  service: name=nginx state=started enabled=yes
